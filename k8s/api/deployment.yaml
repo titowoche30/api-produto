@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: titowoche30/api-produto:v1
+        image: titowoche30/api-produto
         ports:
         - containerPort: 8080
         env:
