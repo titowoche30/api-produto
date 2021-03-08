@@ -14,7 +14,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  CI:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -32,7 +32,7 @@ jobs:
           # Password or personal access token used to log against the Docker registry
           password:  ${{secrets.DOCKERHUB_PWD}}
       
-      - name: Criando a imagem Docker
+      - name: Criando e dando push da imagem Docker
         # You may pin to the exact commit or the version.
         # uses: docker/build-push-action@9379083e426e2e84abb80c8c091f5cdeb7d3fd7a
         uses: docker/build-push-action@v2.3.0
@@ -43,6 +43,28 @@ jobs:
             titowoche30/api-produto:latest
             titowoche30/api-produto:${{ github.run_number }}
           push: true 
-          
-          
-          
+  CD:
+    needs: [CI]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Definindo o contexto do Kubernetes
+        uses: Azure/k8s-set-context@v1
+        with:
+          # Kubernetes Config
+          kubeconfig: $ {{ secrets.K8S_CONFIG }}
+      - name: Deploy MongoDB to Kubernetes cluster
+        uses: Azure/k8s-deploy@v1.3
+        with:
+          # Path to the manifest files which will be used for deployment.
+          manifests: |
+            k8s/mongodb/deployment.yaml
+            k8s/mongodb/service.yaml  
+      - name: Deploy API to Kubernetes cluster
+        uses: Azure/k8s-deploy@v1.3
+        with:
+          # Path to the manifest files which will be used for deployment.
+          manifests: |
+            k8s/api/deployment.yaml
+            k8s/api/service.yaml 
+            
